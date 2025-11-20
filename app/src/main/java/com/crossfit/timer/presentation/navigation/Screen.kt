@@ -11,4 +11,5 @@ sealed class Screen(val route: String) {
     object History : Screen("history")
     object SavedWods : Screen("saved_wods")
     object Settings : Screen("settings")
+    object Counter : Screen("counter") // <- Nueva ruta añadida
 }

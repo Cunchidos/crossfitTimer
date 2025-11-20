@@ -17,7 +17,8 @@ import com.crossfit.timer.data.model.TimerMode
 fun HomeScreen(
     onNavigateToTimer: (String) -> Unit,
     onNavigateToHistory: () -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    onNavigateToCounter: () -> Unit // <- Nueva vía de navegación
 ) {
     Scaffold(
         topBar = {
@@ -47,9 +48,14 @@ fun HomeScreen(
                 modifier = Modifier.weight(1f)
             ) {
                 items(getModes()) { mode ->
+                    val onClick = if (mode.mode == TimerMode.COUNTER) {
+                        onNavigateToCounter
+                    } else {
+                        { onNavigateToTimer(mode.mode.name) }
+                    }
                     ModeCard(
                         mode = mode,
-                        onClick = { onNavigateToTimer(mode.mode.name) }
+                        onClick = onClick
                     )
                 }
             }
@@ -138,5 +144,10 @@ fun getModes(): List<ModeInfo> = listOf(
         mode = TimerMode.CUSTOM,
         displayName = "Personalizado",
         description = "Intervalos personalizados"
+    ),
+    ModeInfo(
+        mode = TimerMode.COUNTER,
+        displayName = "Contador",
+        description = "Contador de rondas simple"
     )
 )

@@ -1,12 +1,12 @@
 package com.crossfit.timer.presentation.screens.config
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -80,6 +80,10 @@ fun ConfigScreen(
                         onStartTimer()
                     }
                 )
+                TimerMode.COUNTER -> { /* No necesita configuración */ }
+                // El 'else' no es estrictamente necesario si cubrimos todos los casos,
+                // pero es una buena práctica para la robustez futura.
+                else -> {}
             }
         }
     }
@@ -429,5 +433,6 @@ private fun getModeDisplayName(mode: TimerMode): String {
         TimerMode.EMOM -> "EMOM"
         TimerMode.FOR_TIME -> "For Time"
         TimerMode.CUSTOM -> "Custom"
+        TimerMode.COUNTER -> "Contador"
     }
 }

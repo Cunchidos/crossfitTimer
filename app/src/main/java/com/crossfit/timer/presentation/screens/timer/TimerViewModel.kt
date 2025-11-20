@@ -110,6 +110,7 @@ class TimerViewModel @Inject constructor() : ViewModel() {
                     TimerMode.EMOM -> handleEmomTick()
                     TimerMode.FOR_TIME -> handleForTimeTick()
                     TimerMode.CUSTOM -> handleCustomTick()
+                    TimerMode.COUNTER -> { /* No timer logic for Counter mode */ }
                 }
             }
         }
@@ -136,6 +137,7 @@ class TimerViewModel @Inject constructor() : ViewModel() {
                     TimerMode.EMOM -> handleEmomTick()
                     TimerMode.FOR_TIME -> handleForTimeTick()
                     TimerMode.CUSTOM -> handleCustomTick()
+                    TimerMode.COUNTER -> { /* No timer logic for Counter mode */ }
                 }
             }
         }

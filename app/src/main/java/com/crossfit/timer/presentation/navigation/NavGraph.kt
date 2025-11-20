@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.crossfit.timer.presentation.SharedConfigViewModel
+import com.crossfit.timer.presentation.screens.counter.CounterScreen
 import com.crossfit.timer.presentation.screens.home.HomeScreen
 
 @Composable
@@ -31,7 +32,16 @@ fun NavGraph(
                 },
                 onNavigateToSettings = {
                     navController.navigate(Screen.Settings.route)
+                },
+                onNavigateToCounter = { // <- Acción conectada
+                    navController.navigate(Screen.Counter.route)
                 }
+            )
+        }
+
+        composable(Screen.Counter.route) { // <- Destino final conectado
+            CounterScreen(
+                onBack = { navController.popBackStack() }
             )
         }
 
