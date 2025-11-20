@@ -2,75 +2,60 @@
 
 ## Descripción del Proyecto
 
-CrossFit Timer es una aplicación Android nativa desarrollada en Kotlin y Jetpack Compose que proporciona temporizadores especializados para entrenamientos de CrossFit. La aplicación soporta múltiples modos de entrenamiento (AMRAP, EMOM, For Time, Custom) con configuraciones personalizables.
+CrossFit Timer es una aplicación Android nativa desarrollada en Kotlin y Jetpack Compose que proporciona temporizadores especializados y herramientas para entrenamientos de CrossFit. La aplicación cuenta con una identidad visual moderna y enérgica, basada en una paleta de colores vibrantes.
 
 ## Arquitectura de la Aplicación
 
 ### Tecnologías Principales
 - **Lenguaje**: Kotlin
-- **UI Framework**: Jetpack Compose
+- **UI Framework**: Jetpack Compose con Material 3
 - **Arquitectura**: MVVM (Model-View-ViewModel)
-- **Dependency Injection**: Dagger Hilt
-- **Base de Datos**: Room
+- **Inyección de Dependencias**: Dagger Hilt
+- **Base de Datos**: Room (para futura implementación de historial)
 - **Navegación**: Navigation Compose
-- **Coroutines**: Manejo asíncrono con Flow y StateFlow
+- **Asincronía**: Kotlin Coroutines & Flow / StateFlow
 
 ### Estructura del Proyecto
 
 ```
 app/src/main/java/com/crossfit/timer/
-├── data/
-│   ├── local/
-│   │   ├── dao/              # Data Access Objects para Room
-│   │   ├── database/         # Configuración de base de datos
-│   │   └── entity/           # Entidades de base de datos
-│   └── model/                # Modelos de datos y estados
-├── di/                       # Módulos de inyección de dependencias
-├── presentation/
-│   ├── navigation/           # Configuración de navegación
-│   ├── screens/
-│   │   ├── config/          # Pantalla de configuración del timer
-│   │   ├── history/         # Historial de entrenamientos
-│   │   ├── home/            # Pantalla principal
-│   │   ├── settings/        # Ajustes de la app
-│   │   └── timer/           # Pantalla del temporizador
-│   └── SharedConfigViewModel.kt  # ViewModel compartido
-├── ui/theme/                 # Tema y estilos
-└── util/                     # Utilidades y constantes
+├── data/              # Modelos de datos y repositorios
+│   └── model/         # Clases de datos (TimerConfig, TimerMode, etc.)
+├── di/                # Módulos de inyección de dependencias (Hilt)
+├── presentation/      # Capa de UI (Compose Screens y ViewModels)
+│   ├── navigation/    # Lógica de navegación (NavGraph, Screen)
+│   └── screens/       # Las diferentes pantallas de la app (Home, Timer, Counter...)
+├── ui/                # Tema, colores y tipografía
+│   └── theme/
+└── util/              # Clases de utilidad y constantes
 ```
 
 ## Modos de Entrenamiento
 
 ### 1. AMRAP (As Many Rounds As Possible)
-- Duración configurable en minutos
-- Contador manual de rondas
-- Beeps en los últimos segundos
+- Duración configurable en minutos.
 
 ### 2. EMOM (Every Minute On the Minute)
-- Número configurable de rondas (minutos)
-- Beep al inicio de cada minuto
-- Muestra segundo dentro del minuto actual
+- Número configurable de rondas (minutos).
 
 ### 3. For Time
-- Cronómetro simple
-- Time cap opcional
-- Ideal para WODs con un objetivo de tiempo
+- Cronómetro simple con un *time cap* opcional.
 
 ### 4. Custom
-- Intervalos personalizables (trabajo/descanso)
-- Múltiples rondas
-- Configuración detallada de cada intervalo
+- Intervalos personalizables de trabajo y descanso.
+
+### 5. Contador
+- Un contador simple a pantalla completa que incrementa con cada toque.
+- Fondo de color dinámico que cambia con cada pulsación.
 
 ## Flujo de Navegación
 
 ```
 HomeScreen
-    ↓
-ConfigScreen (configurar parámetros del modo)
-    ↓
-TimerScreen (ejecutar el temporizador)
-    ↓
-(Opcionalmente) HistoryScreen
+    ├─> ConfigScreen (para AMRAP, EMOM, etc.)
+    │   └─> TimerScreen (ejecuta el temporizador)
+    │
+    └─> CounterScreen (acceso directo al contador)
 ```
 
 ## Componentes Clave
@@ -78,160 +63,33 @@ TimerScreen (ejecutar el temporizador)
 ### ViewModels
 
 #### TimerViewModel
-- Maneja la lógica del temporizador
-- Estados: Idle, Ready, Countdown, Running, Paused, Completed
-- Funciones principales:
-  - `startTimer()`: Inicia countdown y luego el temporizador
-  - `pauseTimer()`: Pausa la ejecución
-  - `stopTimer()`: Detiene y resetea a Idle
-  - `resetTimer()`: Resetea manteniendo configuración (Ready)
-  - `addRound()`: Incrementa contador de rondas (AMRAP/For Time)
+- Maneja la lógica de los temporizadores (AMRAP, EMOM, etc.).
+- Gestiona los estados: Ready, Countdown, Running, Paused, Completed.
 
-#### SharedConfigViewModel
-- **CRÍTICO**: Comparte configuración entre ConfigScreen y TimerScreen
-- Debe ser instanciado una sola vez a nivel del NavGraph
-- Previene pérdida de configuración entre pantallas
-
-### Estados del Timer
-
-```kotlin
-sealed class TimerState {
-    object Idle         // Sin configurar
-    object Ready        // Configurado, listo para iniciar
-    data class Countdown(val count: Int)  // Cuenta regresiva 3-2-1
-    object Running      // Temporizador en ejecución
-    object Paused       // Pausado
-    object Completed    // Finalizado
-}
-```
-
-## Problemas Conocidos y Soluciones
-
-### Problema: Timer no inicia después de mostrar "LISTO"
-
-**Síntoma**: Al presionar "INICIAR", aparece "LISTO" pero el temporizador no comienza.
-
-**Causa**: Múltiples instancias del `SharedConfigViewModel` creadas con `hiltViewModel()` sin scope compartido.
-
-**Solución**: Instanciar el `SharedConfigViewModel` a nivel del `NavGraph` y pasarlo como parámetro a ambas pantallas (ConfigScreen y TimerScreen).
-
-```kotlin
-// NavGraph.kt
-@Composable
-fun NavGraph(navController: NavHostController) {
-    val sharedConfigViewModel: SharedConfigViewModel = hiltViewModel()
-
-    NavHost(...) {
-        composable(Screen.Config.route) {
-            ConfigScreen(
-                sharedViewModel = sharedConfigViewModel  // ✓ Misma instancia
-            )
-        }
-        composable(Screen.Timer.route) {
-            TimerScreen(
-                sharedViewModel = sharedConfigViewModel  // ✓ Misma instancia
-            )
-        }
-    }
-}
-```
+### Tema y Estilo
+- **`CrossFitTimerTheme`**: Tema principal de la aplicación.
+- **Paleta Juvenil**: Se ha implementado una paleta de colores personalizada (`VibrantTurquoise`, `EnergeticMagenta`, `HighlightYellow`) y se han desactivado los colores dinámicos del sistema para garantizar una identidad visual consistente y enérgica en todos los dispositivos.
 
 ## Características Implementadas
 
-- ✅ Múltiples modos de entrenamiento
-- ✅ Configuración personalizable por modo
-- ✅ Countdown antes de iniciar (3-2-1-GO)
-- ✅ Pausar/reanudar temporizador
-- ✅ Contador de rondas (manual y automático)
-- ✅ Orientación landscape forzada en pantalla del timer
-- ✅ Base de datos local con Room
-- ✅ Historial de entrenamientos
-- ✅ Opciones de sonido y vibración
+- ✅ 5 modos de entrenamiento, incluyendo el nuevo **Contador**.
+- ✅ Configuración personalizable para los modos de temporizador.
+- ✅ Tema de la aplicación completamente rediseñado con una paleta de colores juvenil y vibrante.
+- ✅ Pantalla de contador con cambio de color de fondo dinámico.
+- ✅ Arquitectura base robusta con Hilt, Navigation Compose y MVVM.
 
-## Características Pendientes (TODO)
+## Características Descartadas / Eliminadas
 
-- ⏳ Implementar reproducción de sonidos
-  - Beeps de countdown
-  - Beeps en últimos segundos
-  - Sonido de finalización
-- ⏳ Implementar vibración
-- ⏳ Guardar workouts completados en historial
-- ⏳ Exportar/compartir resultados
-- ⏳ Temas personalizables
-- ⏳ WODs predefinidos
+- ❌ **Sonido y Vibración**: Se ha eliminado toda la lógica y las opciones de la interfaz relacionadas con el sonido y la vibración para simplificar la aplicación.
 
-## Configuración del Entorno de Desarrollo
+## Próximos Pasos Potenciales
 
-### Requisitos
-- Android Studio Arctic Fox o superior
-- JDK 11+
-- Gradle 7.0+
-- Android SDK 24+ (target 34)
-
-### Dependencias Principales
-```gradle
-// Compose
-implementation "androidx.compose.ui:ui"
-implementation "androidx.compose.material3:material3"
-
-// Navigation
-implementation "androidx.navigation:navigation-compose"
-
-// Hilt
-implementation "com.google.dagger:hilt-android"
-kapt "com.google.dagger:hilt-compiler"
-
-// Room
-implementation "androidx.room:room-runtime"
-kapt "androidx.room:room-compiler"
-implementation "androidx.room:room-ktx"
-
-// Coroutines
-implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android"
-```
-
-## Testing
-
-### Unit Tests
-- TimerViewModel: Lógica de estados y transiciones
-- TimeFormatter: Formateo de tiempo
-
-### Instrumentación Tests
-- Navegación entre pantallas
-- Guardar y recuperar configuraciones
-- Persistencia en base de datos
-
-## Contribución
-
-Al trabajar en este proyecto:
-1. Seguir arquitectura MVVM
-2. Usar Compose para toda la UI
-3. Inyección de dependencias con Hilt
-4. Mantener ViewModels sin referencias a Context
-5. Usar Flow/StateFlow para estados reactivos
-6. Comentar lógica compleja en español
-
-## Logs y Debugging
-
-Para debuggear el flujo del timer:
-- Agregar logs en `TimerViewModel.startTimer()`
-- Verificar `_uiState.value.config` antes de iniciar
-- Comprobar que `timerJob` no sea null durante ejecución
-
-## Notas Importantes
-
-1. **SharedConfigViewModel**: Siempre debe compartirse a nivel del NavGraph
-2. **Orientación**: TimerScreen fuerza landscape automáticamente
-3. **Lifecycle**: TimerJob se cancela en `onCleared()` del ViewModel
-4. **Precisión**: Timer actualiza cada 100ms para mayor precisión visual
-5. **Estados**: Las transiciones de estado son unidireccionales y predecibles
-
-## Contacto y Soporte
-
-Para issues, features o preguntas sobre la arquitectura, referirse a la documentación de cada componente individual en el código fuente.
+- ⏳ **Historial de Entrenamientos**: Guardar los resultados en una base de datos Room.
+- ⏳ **Registro Manual**: Permitir a los usuarios añadir entrenamientos pasados.
+- ⏳ **WODs Favoritos**: Guardar configuraciones de entrenamiento comunes.
 
 ---
 
-**Última actualización**: 2025-11-17
-**Versión**: 1.0.0
+**Última actualización**: Hecha para reflejar la adición del modo Contador y el nuevo tema visual.
+**Versión**: 1.1.0
 **Estado**: En desarrollo activo

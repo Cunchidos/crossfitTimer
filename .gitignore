@@ -1,15 +1,29 @@
-*.iml
+# Archivos generados por el sistema de compilación
 .gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+/build/
+
+# Archivos generados por el IDE
+*.iml
+.idea/
+
+# Archivos locales de configuración
 local.properties
+
+# Archivos de empaquetado
+*.apk
+*.aab
+
+# Archivos de Keystore
+*.jks
+*.keystore
+
+# Archivos de ProGuard
+/proguard/
+
+# Reportes y logs
+/captures/
+.cxx/
+*.log
+
+# Otros
+.DS_Store
