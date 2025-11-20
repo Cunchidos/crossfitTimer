@@ -1,30 +1,21 @@
 package com.crossfit.timer.presentation.screens.timer
 
 import android.app.Activity
-import android.content.Intent
 import android.content.pm.ActivityInfo
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
 import com.crossfit.timer.data.model.TimerConfig
 import com.crossfit.timer.data.model.TimerMode
 import com.crossfit.timer.data.model.TimerState
@@ -41,7 +32,9 @@ fun TimerScreen(
     ForceLandscape()
     val config by sharedViewModel.sharedConfig.collectAsState()
     LaunchedEffect(config) {
-        config?.let { viewModel.setConfig(it) }
+        config?.let { timerConfig: TimerConfig ->
+            viewModel.setConfig(timerConfig)
+        }
     }
     val uiState by viewModel.uiState.collectAsState()
 
@@ -66,111 +59,23 @@ fun TimerScreen(
                     uiState = uiState,
                     isPaused = state is TimerState.Paused,
                     onPause = { viewModel.pauseTimer() },
-                    onStart = { viewModel.startTimer() },
+                    onStart = { viewModel.startTimer() }, // Para reanudar
                     onStop = { viewModel.stopTimer() },
                     onAddRound = { viewModel.addRound() }
                 )
             }
-            is TimerState.Completed -> {
+            is TimerState.Completed -> { // Pantalla de "COMPLETADO"
                 CompletedDisplay(
                     mode = uiState.config.mode,
                     elapsedSeconds = uiState.elapsedSeconds,
                     rounds = uiState.currentRound,
-                    onSave = {
-                        // Aquí llamaremos al ViewModel para guardar
-                        // viewModel.saveWorkoutToHistory(it)
-                        onBack() // De momento, solo volvemos atrás
-                    },
-                    onDiscard = { onBack() }
+                    onReset = { viewModel.resetTimer() }
                 )
             }
         }
     }
 }
 
-// --- COMPONENTES DE LA PANTALLA ---
-
-@Composable
-fun CompletedDisplay(
-    mode: TimerMode,
-    elapsedSeconds: Int,
-    rounds: Int,
-    onSave: (photoUri: String?) -> Unit,
-    onDiscard: () -> Unit
-) {
-    val context = LocalContext.current
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-
-    // Launcher para seleccionar imagen de la galería
-    val pickMedia = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null) {
-            // Tomar permisos persistentes para poder acceder al URI más tarde
-            val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
-            context.contentResolver.takePersistableUriPermission(uri, flag)
-            selectedImageUri = uri
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(vertical = 16.dp, horizontal = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text("¡TERMINADO!", fontSize = 52.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        Spacer(Modifier.height(32.dp))
-        Text("Tiempo: ${TimeFormatter.formatTime(elapsedSeconds)}", fontSize = 42.sp, color = MaterialTheme.colorScheme.onBackground)
-        if (mode == TimerMode.AMRAP || mode == TimerMode.FOR_TIME) {
-            Spacer(Modifier.height(12.dp))
-            Text("Rondas: $rounds", fontSize = 36.sp, color = MaterialTheme.colorScheme.onBackground)
-        }
-
-        Spacer(Modifier.weight(1f))
-
-        // --- Sección para añadir foto ---
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            if (selectedImageUri != null) {
-                AsyncImage(
-                    model = selectedImageUri,
-                    contentDescription = "Foto del resultado",
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(RoundedCornerShape(12.dp)),
-                    contentScale = ContentScale.Crop
-                )
-            }
-            OutlinedButton(onClick = { pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) {
-                Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, modifier = Modifier.size(24.dp))
-                Spacer(Modifier.width(8.dp))
-                Text(if (selectedImageUri == null) "Añadir Foto" else "Cambiar Foto")
-            }
-        }
-
-        Spacer(Modifier.weight(1f))
-
-        // --- Botones de acción ---
-        Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-            OutlinedButton(
-                onClick = onDiscard,
-                modifier = Modifier.height(60.dp).width(180.dp)
-            ) {
-                Text("DESCARTAR", fontSize = 18.sp)
-            }
-            Button(
-                onClick = { onSave(selectedImageUri?.toString()) },
-                modifier = Modifier.height(60.dp).width(180.dp)
-            ) {
-                Icon(Icons.Default.Save, null, modifier = Modifier.size(24.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("GUARDAR", fontSize = 18.sp)
-            }
-        }
-    }
-}
-
-
-// --- OTROS COMPONENTES SIN CAMBIOS SIGNIFICATIVOS ---
 
 @Composable
 fun RunningStateLayout(
@@ -186,15 +91,13 @@ fun RunningStateLayout(
             .fillMaxSize()
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween // Espacio equitativo
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        // --- COLUMNA 1: IZQUIERDA (Botones de Pausa y Detener) ---
         Column(
             modifier = Modifier.width(160.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically)
         ) {
-            // Botón PAUSAR / SEGUIR
             Button(
                 onClick = if (isPaused) onStart else onPause,
                 modifier = Modifier.fillMaxWidth().height(80.dp),
@@ -213,7 +116,6 @@ fun RunningStateLayout(
                 Text(if (isPaused) "SEGUIR" else "PAUSAR", fontWeight = FontWeight.Bold, fontSize = 18.sp)
             }
 
-            // Botón DETENER
             OutlinedButton(
                 onClick = onStop,
                 modifier = Modifier.fillMaxWidth().height(70.dp),
@@ -226,10 +128,9 @@ fun RunningStateLayout(
             }
         }
 
-        // --- COLUMNA 2: CENTRO (Cronómetro Gigante) ---
         Text(
             text = TimeFormatter.formatTime(uiState.elapsedSeconds),
-            modifier = Modifier.weight(1f), // <- ESTO ES CLAVE para que ocupe el centro
+            modifier = Modifier.weight(1f),
             fontSize = 160.sp,
             fontWeight = FontWeight.Black,
             textAlign = TextAlign.Center,
@@ -237,21 +138,18 @@ fun RunningStateLayout(
             lineHeight = 160.sp
         )
 
-        // --- COLUMNA 3: DERECHA (Contador de Rondas) ---
         if (uiState.config.mode == TimerMode.AMRAP || uiState.config.mode == TimerMode.FOR_TIME) {
             Column(
                 modifier = Modifier.width(160.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Número de rondas
                 Text(
                     text = uiState.currentRound.toString(),
                     fontSize = 90.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-                // Texto "RONDAS"
                 Text(
                     "RONDAS",
                     fontSize = 22.sp,
@@ -260,7 +158,6 @@ fun RunningStateLayout(
                     modifier = Modifier.offset(y = (-12).dp)
                 )
                 Spacer(Modifier.height(20.dp))
-                // Botón '+'
                 FilledIconButton(
                     onClick = onAddRound,
                     modifier = Modifier.size(80.dp),
@@ -308,6 +205,36 @@ fun ReadyDisplay(onStart: () -> Unit) {
             Icon(Icons.Default.PlayArrow, "Iniciar", modifier = Modifier.size(48.dp))
             Spacer(modifier = Modifier.width(16.dp))
             Text("INICIAR", fontSize = 32.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+fun CompletedDisplay(mode: TimerMode, elapsedSeconds: Int, rounds: Int, onReset: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("¡TERMINADO!", fontSize = 60.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Spacer(Modifier.height(40.dp))
+        Text("Tiempo: ${TimeFormatter.formatTime(elapsedSeconds)}", fontSize = 48.sp, color = MaterialTheme.colorScheme.onBackground)
+        if (mode == TimerMode.AMRAP || mode == TimerMode.FOR_TIME) {
+            Spacer(Modifier.height(16.dp))
+            Text("Rondas: $rounds", fontSize = 40.sp, color = MaterialTheme.colorScheme.onBackground)
+        }
+        Spacer(Modifier.height(60.dp))
+        Button(
+            onClick = onReset,
+            modifier = Modifier.size(width = 280.dp, height = 90.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        ) {
+            Icon(Icons.Default.Refresh, "Reiniciar", modifier = Modifier.size(36.dp))
+            Spacer(Modifier.width(16.dp))
+            Text("REINICIAR", fontSize = 28.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

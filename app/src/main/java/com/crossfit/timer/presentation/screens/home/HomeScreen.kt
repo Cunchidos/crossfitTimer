@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,23 +17,13 @@ import com.crossfit.timer.data.model.TimerMode
 fun HomeScreen(
     onNavigateToTimer: (String) -> Unit,
     onNavigateToHistory: () -> Unit,
-    onNavigateToSettings: () -> Unit,
-    onNavigateToManualEntry: () -> Unit // <- Nuevo canal de navegación
+    onNavigateToSettings: () -> Unit
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("CrossFit Timer") }
             )
-        },
-        floatingActionButton = { // <- Aquí está el nuevo botón flotante
-            FloatingActionButton(
-                onClick = { onNavigateToManualEntry() },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Añadir registro")
-            }
         }
     ) { paddingValues ->
         Column(
