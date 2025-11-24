@@ -1,13 +1,12 @@
-// ruta: app/src/main/java/com/crossfit/timer/ui/theme/Color.kt
-
 package com.crossfit.timer.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// --- Paleta Principal (Modo Oscuro por defecto) ---
-val CrossFitRed = Color(0xFFE63946)      // Rojo para acciones primarias y acentos
-val DarkBackground = Color(0xFF1A1A1A)  // Fondo principal oscuro
-val DarkSurface = Color(0xFF2C2C2C)      // Un gris algo más claro para tarjetas, menús, etc.
-val OffWhite = Color(0xFFF1FAEE)        // Color para textos y contenido principal
-val PausedYellow = Color(0xFFFFC107)    // Amarillo para el estado de pausa
-val GreyAccent = Color(0xFFA8DADC)       // Gris/azul claro para elementos secundarios o desactivados
+// Paleta de colores principal con temática juvenil y enérgica
+val VibrantTurquoise = Color(0xFF00F5D4) // Un turquesa eléctrico para el color primario
+val EnergeticMagenta = Color(0xFFF72585) // Un magenta vibrante para acentos y acciones
+val HighlightYellow = Color(0xFFFFD60A)  // Un amarillo brillante para destacar
+val DarkBackground = Color(0xFF1D1F2B)   // Un fondo oscuro, casi negro pero con un toque azulado
+val LightBackground = Color(0xFFFFFFFF)  // Un fondo claro muy limpio
+val White = Color.White
+val Black = Color.Black

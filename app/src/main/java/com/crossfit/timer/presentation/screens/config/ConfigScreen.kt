@@ -81,8 +81,6 @@ fun ConfigScreen(
                     }
                 )
                 TimerMode.COUNTER -> { /* No necesita configuración */ }
-                // El 'else' no es estrictamente necesario si cubrimos todos los casos,
-                // pero es una buena práctica para la robustez futura.
                 else -> {}
             }
         }
@@ -411,7 +409,10 @@ fun ConfigSection(
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface // Usar color de superficie del tema
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp),

@@ -49,7 +49,10 @@ fun TimerScreen(
                 }
             }
             is TimerState.Ready -> {
-                ReadyDisplay(onStart = { viewModel.startTimer() })
+                ReadyDisplay(
+                    onStart = { viewModel.startTimer() },
+                    onBack = onBack // <-- Pasamos la acción de volver
+                )
             }
             is TimerState.Countdown -> {
                 CountdownDisplay(count = state.count)
@@ -69,9 +72,11 @@ fun TimerScreen(
                     mode = uiState.config.mode,
                     elapsedSeconds = uiState.elapsedSeconds,
                     rounds = uiState.currentRound,
-                    onReset = { viewModel.resetTimer() }
+                    onReset = { viewModel.resetTimer() },
+                    onBack = onBack
                 )
             }
+            else -> {}
         }
     }
 }
@@ -102,29 +107,28 @@ fun RunningStateLayout(
                 onClick = if (isPaused) onStart else onPause,
                 modifier = Modifier.fillMaxWidth().height(80.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isPaused) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onError
+                    containerColor = if (isPaused) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary,
+                    contentColor = if (isPaused) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onPrimary
                 ),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
             ) {
                 Icon(
                     if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
-                    contentDescription = null,
-                    modifier = Modifier.size(36.dp)
+                    contentDescription = if (isPaused) "Reanudar" else "Pausar",
+                    modifier = Modifier.size(48.dp)
                 )
-                Spacer(Modifier.width(8.dp))
-                Text(if (isPaused) "SEGUIR" else "PAUSAR", fontWeight = FontWeight.Bold, fontSize = 18.sp)
             }
 
             OutlinedButton(
                 onClick = onStop,
                 modifier = Modifier.fillMaxWidth().height(70.dp),
-                border = BorderStroke(2.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f)),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.9f))
+                border = BorderStroke(2.dp, MaterialTheme.colorScheme.secondary)
             ) {
-                Icon(Icons.Default.Stop, null)
-                Spacer(Modifier.width(8.dp))
-                Text("DETENER", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Icon(
+                    Icons.Default.Stop,
+                    contentDescription = "Detener",
+                    modifier = Modifier.size(36.dp)
+                )
             }
         }
 
@@ -134,7 +138,7 @@ fun RunningStateLayout(
             fontSize = 160.sp,
             fontWeight = FontWeight.Black,
             textAlign = TextAlign.Center,
-            color = if (isPaused) MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onBackground,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = if (isPaused) 0.6f else 1.0f),
             lineHeight = 160.sp
         )
 
@@ -147,8 +151,7 @@ fun RunningStateLayout(
                 Text(
                     text = uiState.currentRound.toString(),
                     fontSize = 90.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
+                    fontWeight = FontWeight.Bold
                 )
                 Text(
                     "RONDAS",
@@ -161,13 +164,7 @@ fun RunningStateLayout(
                 FilledIconButton(
                     onClick = onAddRound,
                     modifier = Modifier.size(80.dp),
-                    enabled = !isPaused,
-                    colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                        disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
-                    )
+                    enabled = !isPaused
                 ) {
                     Icon(Icons.Default.Add, "Añadir Ronda", modifier = Modifier.size(48.dp))
                 }
@@ -191,26 +188,35 @@ fun CountdownDisplay(count: Int) {
 }
 
 @Composable
-fun ReadyDisplay(onStart: () -> Unit) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+fun ReadyDisplay(onStart: () -> Unit, onBack: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
         Button(
             onClick = onStart,
             modifier = Modifier.size(width = 300.dp, height = 120.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ),
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
         ) {
             Icon(Icons.Default.PlayArrow, "Iniciar", modifier = Modifier.size(48.dp))
             Spacer(modifier = Modifier.width(16.dp))
             Text("INICIAR", fontSize = 32.sp, fontWeight = FontWeight.Bold)
         }
+        Spacer(modifier = Modifier.height(24.dp))
+        OutlinedButton(
+            onClick = onBack,
+            modifier = Modifier.size(width = 250.dp, height = 60.dp)
+        ) {
+            Icon(Icons.Default.ArrowBack, "Volver", modifier = Modifier.size(24.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("VOLVER", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        }
     }
 }
 
 @Composable
-fun CompletedDisplay(mode: TimerMode, elapsedSeconds: Int, rounds: Int, onReset: () -> Unit) {
+fun CompletedDisplay(mode: TimerMode, elapsedSeconds: Int, rounds: Int, onReset: () -> Unit, onBack: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -218,23 +224,32 @@ fun CompletedDisplay(mode: TimerMode, elapsedSeconds: Int, rounds: Int, onReset:
     ) {
         Text("¡TERMINADO!", fontSize = 60.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.height(40.dp))
-        Text("Tiempo: ${TimeFormatter.formatTime(elapsedSeconds)}", fontSize = 48.sp, color = MaterialTheme.colorScheme.onBackground)
+        Text("Tiempo: ${TimeFormatter.formatTime(elapsedSeconds)}", fontSize = 48.sp)
         if (mode == TimerMode.AMRAP || mode == TimerMode.FOR_TIME) {
             Spacer(Modifier.height(16.dp))
-            Text("Rondas: $rounds", fontSize = 40.sp, color = MaterialTheme.colorScheme.onBackground)
+            Text("Rondas: $rounds", fontSize = 40.sp)
         }
         Spacer(Modifier.height(60.dp))
-        Button(
-            onClick = onReset,
-            modifier = Modifier.size(width = 280.dp, height = 90.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Icon(Icons.Default.Refresh, "Reiniciar", modifier = Modifier.size(36.dp))
-            Spacer(Modifier.width(16.dp))
-            Text("REINICIAR", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            OutlinedButton(
+                onClick = onBack, // Botón para volver a la home
+                modifier = Modifier.size(width = 180.dp, height = 90.dp)
+            ) {
+                Icon(Icons.Default.Home, "Volver a inicio", modifier = Modifier.size(36.dp))
+                Spacer(Modifier.width(12.dp))
+                Text("INICIO", fontSize = 20.sp)
+            }
+            Button(
+                onClick = onReset, // Botón para reiniciar el mismo timer
+                modifier = Modifier.size(width = 220.dp, height = 90.dp)
+            ) {
+                Icon(Icons.Default.Refresh, "Reiniciar", modifier = Modifier.size(36.dp))
+                Spacer(Modifier.width(12.dp))
+                Text("REINICIAR", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.crossfit.timer.presentation.screens.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -23,7 +24,11 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("CrossFit Timer") }
+                title = { Text("CrossFit Timer") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         }
     ) { paddingValues ->
@@ -67,14 +72,16 @@ fun HomeScreen(
             ) {
                 OutlinedButton(
                     onClick = onNavigateToHistory,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
                 ) {
                     Text("Historial")
                 }
 
                 OutlinedButton(
                     onClick = onNavigateToSettings,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
                 ) {
                     Text("Configuración")
                 }
@@ -92,10 +99,15 @@ fun ModeCard(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(120.dp)
+            .height(120.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primary // Usar color primario del tema
+        )
     ) {
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -105,13 +117,14 @@ fun ModeCard(
                 Text(
                     text = mode.displayName,
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimary // Usar color sobre primario
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = mode.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f) // Igual, pero con opacidad
                 )
             }
         }
