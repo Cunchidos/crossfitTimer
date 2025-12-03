@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -29,7 +30,10 @@ fun TimerScreen(
     viewModel: TimerViewModel = hiltViewModel(),
     sharedViewModel: SharedConfigViewModel = hiltViewModel()
 ) {
+    // Efectos de la pantalla: forzar paisaje y mantenerla encendida
     ForceLandscape()
+    KeepScreenOn()
+
     val config by sharedViewModel.sharedConfig.collectAsState()
     LaunchedEffect(config) {
         config?.let { timerConfig: TimerConfig ->
@@ -250,6 +254,19 @@ fun CompletedDisplay(mode: TimerMode, elapsedSeconds: Int, rounds: Int, onReset:
                 Spacer(Modifier.width(12.dp))
                 Text("REINICIAR", fontSize = 20.sp, fontWeight = FontWeight.Bold)
             }
+        }
+    }
+}
+
+// --- Screen Effects ---
+
+@Composable
+private fun KeepScreenOn() {
+    val view = LocalView.current
+    DisposableEffect(Unit) {
+        view.keepScreenOn = true
+        onDispose {
+            view.keepScreenOn = false
         }
     }
 }

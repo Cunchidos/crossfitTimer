@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
@@ -31,6 +32,8 @@ fun CounterScreen(
 ) {
     var count by remember { mutableStateOf(0) }
     var colorIndex by remember { mutableStateOf(0) }
+
+    KeepScreenOn()
 
     Scaffold(
         // Asignamos el color de fondo dinámicamente
@@ -80,6 +83,18 @@ fun CounterScreen(
                 // El color del texto cambia para ser siempre visible sobre el fondo oscuro
                 color = Color.White.copy(alpha = 0.9f) 
             )
+        }
+    }
+}
+
+
+@Composable
+private fun KeepScreenOn() {
+    val view = LocalView.current
+    DisposableEffect(Unit) {
+        view.keepScreenOn = true
+        onDispose {
+            view.keepScreenOn = false
         }
     }
 }
